@@ -1,11 +1,16 @@
 // functions/api/chat.js
-// ⚠️ "@google/genai" のimportを削除します ⚠️
+// ⚠️ 以前のエラー原因となった import はありません ⚠️
 
 // 6時間ごとのAPIキー自動交代ロジック
-// ... (getRotatingApiKey関数はそのまま残します) ...
+// 環境変数: GEMINI_API_KEY1, GEMINI_API_KEY2, GEMINI_API_KEY3, GEMINI_API_KEY4
 const KEY_COUNT = 4;
 const ROTATION_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
+/**
+ * 現在の時刻に基づいて、使用すべきAPIキーを環境変数から取得します。
+ * @param {object} env Cloudflare Pages Functionsの環境変数
+ * @returns {string} 選択されたAPIキー
+ */
 function getRotatingApiKey(env) {
     const epoch = new Date('2024-01-01T00:00:00Z').getTime();
     const now = Date.now();
@@ -15,19 +20,20 @@ function getRotatingApiKey(env) {
     const selectedKey = env[key_name];
 
     if (!selectedKey) {
-        console.error(`ERROR: API Key '${key_name}' not found.`);
+        console.error(`ERROR: API Key '${key_name}' not found in environment variables.`);
         return null;
     }
+    console.log(`Using API Key: ${key_name} (Interval: ${interval_number})`);
     return selectedKey;
 }
 
 
+// Cloudflare Pages Functionのエントリーポイント
 export async function onRequestPost({ request, env }) {
     try {
         const rotatingApiKey = getRotatingApiKey(env);
 
         if (!rotatingApiKey) {
-            // ... (エラーレスポンスはそのまま) ...
             return new Response(JSON.stringify({ error: "API Key is missing or invalid." }), {
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }
@@ -48,19 +54,19 @@ export async function onRequestPost({ request, env }) {
             },
         };
 
-        // 2. Google Gemini APIの直接呼び出し
+        // 2. Google Gemini APIの直接呼び出し (Fetch APIを使用)
         const apiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",
-                // ⚠️ APIキーをAuthorizationヘッダーで渡す ⚠️
+                // APIキーをAuthorizationヘッダーで渡す 
                 "Authorization": `Bearer ${rotatingApiKey}`
             },
             body: JSON.stringify(requestBody)
         });
 
         if (!apiResponse.ok) {
-             // Google API側からのエラーをキャッチ
+            // Google API側からのエラーをキャッチ
             const errorData = await apiResponse.json();
             throw new Error(`Google API Error: ${errorData.error.message || apiResponse.statusText}`);
         }
