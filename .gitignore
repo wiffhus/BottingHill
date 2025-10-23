@@ -1,0 +1,14 @@
+# Dependencies
+/node_modules
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.DS_Store
+
+# Cloudflare Pages specific
+.wrangler
