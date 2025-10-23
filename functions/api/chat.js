@@ -1,5 +1,4 @@
 // functions/api/chat.js
-// 「Botting Hillの恋人」 - APIキー自動交代ロジック搭載
 // 外部パッケージ（@google/genai）は一切使用していません。
 
 // 6時間ごとのAPIキー自動交代ロジックのための定数
@@ -31,7 +30,6 @@ function getRotatingApiKey(env) {
 
     if (!selectedKey) {
         console.error(`ERROR: API Key '${key_name}' not found.`);
-        // 開発者が確認しやすいようにログにエラーを残す
         return null;
     }
     
