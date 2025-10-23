@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Botting Hillの恋人 - チャットボットメーカー</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        #chat-window { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        .user { text-align: right; color: blue; }
+        .bot { text-align: left; color: green; }
+    </style>
+</head>
+<body>
+    <h1>Botting Hillの恋人 試作チャット</h1>
+    <div id="chat-window"></div>
+    <input type="text" id="user-input" placeholder="メッセージを入力..." style="width: 80%;">
+    <button onclick="sendMessage()">送信</button>
+
+    <script>
+        // *** 簡易キャラクター設定データ (本来はデータベースからロード) ***
+        const character_config = {
+            system_prompt: "あなたは『Botting Hillの恋人』のキャラクターです。明るく優しい口調で、ユーザーの会話相手になってください。",
+            name: "桜子",
+            // 実際にはスライダー設定や自由入力の内容が格納される
+        };
+
+        async function sendMessage() {
+            const inputElement = document.getElementById('user-input');
+            const message = inputElement.value.trim();
+            if (!message) return;
+
+            // UIにユーザーメッセージを追加
+            const chatWindow = document.getElementById('chat-window');
+            chatWindow.innerHTML += `<div class="user">あなた: ${message}</div>`;
+            inputElement.value = '';
+
+            try {
+                // Cloudflare Pages Functionを呼び出し
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        user_message: message, 
+                        character_config: character_config 
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                // UIにBotの応答を追加
+                chatWindow.innerHTML += `<div class="bot">${character_config.name}: ${data.response}</div>`;
+
+            } catch (error) {
+                console.error("Chat error:", error);
+                chatWindow.innerHTML += `<div class="bot" style="color: red;">エラーが発生しました: ${error.message}</div>`;
+            }
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    </script>
+</body>
+</html>
